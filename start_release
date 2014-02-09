@@ -1,0 +1,3 @@
+#!/bin/zsh
+
+./make_release; ./release/test

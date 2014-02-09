@@ -1,0 +1,10 @@
+#!/bin/bash
+
+if ! [ -d profiling ]; then
+  mkdir profiling
+fi
+make compile_flags="-O3 -pg" \
+     link_flags="-pg" \
+     --directory=profiling \
+     --makefile=../makefile
+

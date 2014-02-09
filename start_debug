@@ -1,0 +1,4 @@
+#!/bin/zsh
+
+./make_debug;
+gdb /debug/test

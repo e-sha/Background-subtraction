@@ -1,0 +1,5 @@
+#!/bin/zsh
+
+./make_profiling;
+./profiling/test;
+gprof ./profiling/test

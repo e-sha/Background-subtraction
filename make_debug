@@ -1,0 +1,9 @@
+#!/bin/bash
+
+if ! [ -d debug ]; then
+  mkdir debug
+fi
+make compile_flags="-O0 -g" \
+     --directory=debug \
+     --makefile=../makefile
+

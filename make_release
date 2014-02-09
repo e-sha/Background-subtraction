@@ -1,0 +1,9 @@
+#!/bin/bash
+
+if ! [ -d release ]; then
+  mkdir release
+fi
+make compile_flags="-O3" \
+     --directory=release \
+     --makefile=../makefile
+
