@@ -46,4 +46,10 @@ class GMMSubtractor : public BaseSubtractor
 	private:
 		/// Implementation of the background subtractor
 		IGMMSubtractorImpl *m_impl;
+
+		// Number of gaussians per pixel
+		unsigned int m_num_gaussians;
+
+		/// Method to release subtractor implementation
+		void ReleaseImplementation();
 };
