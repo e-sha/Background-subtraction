@@ -50,37 +50,12 @@ class SimpleSubtractorImpl4 : public ISimpleSubtractorImpl
 		/// used background threshold
 		__m128 m_threshold;
 
-		/// Method to convert array of 16 8bit unsigned integer values to floating
-		/// point values
-		/// @param in_value is an input 16 8bit unsigned integer values
-		/// @param out_first is a first fourth of floating point values
-		/// @param out_second is a second fourth of floating point values
-		/// @param out_third is a third fourth of floating point values
-		/// @param out_fourth is a last fourth of floating point values
-		void ConvertInt8ToFloat(__m128i in_value, __m128 &out_first,
-		  __m128 &out_second, __m128 &out_third, __m128 &out_fourth);
-
-		/// Method to convert values from the [abcd] [abcd] [abcd] [abcd] format to
-		/// [aaaa] [bbbb] [cccc] [dddd] format. Pixels stored in the following order
-		/// [0123].
-		/// @param io_a is a first block of values;
-		/// @param io_b is a second block of values;
-		/// @param io_c is a third block of values;
-		/// @param io_d is a fourth block of values;
-		static inline void ShufflePixels(__m128 &io_a, __m128 &io_b, __m128 &io_c,
-			__m128 &io_d);
-
 		/// Method to subtract background and update model for 16 elements
 		/// @param @in_img is a pointer to four image pixels;
 		/// @param @io_model is a pointer to four model pixel;
 		/// @return foreground mask. If pixels is related to foreground than its
 		/// value in the mask is 0xffffffff.
 		inline __m128i SubtractBlock(const unsigned char *in_img, float *io_model);
-
-		/// Method to compute absolute value of the 4 input floating point values
-		/// @param in_value is the 4 input floating point values;
-		/// @return absolute values of the 4 input floating point values.
-		static inline __m128 Abs_ps(__m128 in_value);
 
 		/// Method to update model for the current block
 		/// @param io_model is a block of the model

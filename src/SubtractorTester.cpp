@@ -5,7 +5,7 @@
 #include <opencv/highgui.h>
 #include <xmmintrin.h>
 
-#define NUM_CHANNELS 4
+#define NUM_CHANNELS 3
 
 const unsigned int NUM_ELEMS_PER_BLOCK = 16;
 const unsigned int NUM_BLOCKS_PER_CELL = 255;

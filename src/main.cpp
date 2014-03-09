@@ -14,105 +14,6 @@
 #define MAIN_NUM_CHANNELS 3
 
 #if DEBUG
-void test3()
-{
-  char a;
-  const unsigned int NUM_ROWS = 16;
-  const unsigned int NUM_COLS = 16;
-
-  cv::Mat bg(NUM_ROWS, NUM_COLS, CV_8UC3);
-  cv::Mat img(NUM_ROWS, NUM_COLS, CV_8UC3);
-  cv::Mat mask(NUM_ROWS, NUM_COLS, CV_8UC1);
-  unsigned char *bg_row, *img_row, *mask_row;
-  unsigned char base;
-  for (auto row_idx = 0U; row_idx < NUM_ROWS; ++row_idx)
-  {
-    bg_row = bg.data + row_idx * bg.step;
-    img_row = img.data + row_idx * img.step;
-    base = row_idx * bg.cols * 3;
-    for (auto col_idx = 0U; col_idx < 3 * NUM_COLS; ++col_idx)
-    {
-      bg_row[col_idx] = 0;
-      img_row[col_idx] = (col_idx / 3 == row_idx) ? 255 : bg_row[col_idx]; 
-    }
-  }
-
-  SimpleSubtractorImpl3 s;
-  s.Train(bg.data, bg.rows, bg.cols, bg.step);
-  s.Subtract(img.data, img.rows, img.cols, img.step, mask.data, mask.step);
-  for (auto row_idx = 0U; row_idx < NUM_ROWS; ++row_idx)
-  {
-    mask_row = mask.data + row_idx * mask.step;
-    for (auto col_idx = 0U; col_idx < NUM_COLS; ++col_idx)
-    {
-      auto value_is_incorrect =
-        mask_row[col_idx] != (row_idx == col_idx ? 255 : 0);
-      if (value_is_incorrect)
-        std::cout << row_idx << ',' << col_idx << std::endl;
-    }
-  }
-  std::cin >> a;
-}
-
-void map(unsigned int in_value)
-{
-  auto channel_idx = in_value % 3;
-  auto pixel_idx = in_value / 3;
-  switch (channel_idx)
-  {
-    case 0:
-      std::cout << 'r';
-      break;
-    case 1:
-      std::cout << 'g';
-      break;
-    case 2:
-      std::cout << 'b';
-      break;
-  }
-  std::cout << pixel_idx;
-}
-
-void test3Mapping()
-{
-  float data[48];
-  float res[48];
-  for (auto idx = 0; idx < 48; ++idx)
-    data[idx] = idx;
-
-  for (auto pixel_idx = 0; pixel_idx < 16; ++pixel_idx)
-  {
-    auto base = pixel_idx * 3;
-    for (auto channel_idx = 0; channel_idx < 3; ++channel_idx)
-    {
-      map(data[base + channel_idx]);
-      std::cout << ' ';
-    }
-    std::cout << std::endl;
-  }
-
-  __m128 data_sse[12];
-  for (auto idx = 0; idx < 12; ++idx)
-    data_sse[idx] = _mm_loadu_ps(data + idx * 4);
-
-  SimpleSubtractorImpl3::ShufflePixels(data_sse[0], data_sse[1], data_sse[2],
-    data_sse[3], data_sse[4], data_sse[5], data_sse[6], data_sse[7],
-    data_sse[8], data_sse[9], data_sse[10], data_sse[11]);
-
-  for (auto idx = 0; idx < 12; ++idx)
-    _mm_storeu_ps(res + idx * 4, data_sse[idx]);
-
-  for (auto idx = 0; idx < 12; ++idx)
-  {
-    auto base = idx * 4;
-    for (auto elem_idx = 0; elem_idx < 4; ++elem_idx)
-    {
-      map(res[base + elem_idx]);
-      std::cout << ' ';
-    }
-    std::cout << std::endl;
-  }
-}
 
 int testOnCam();
 
@@ -165,14 +66,11 @@ void computeSobel(const unsigned char *in_img, const unsigned int in_num_rows,
 int main(int argc, const char* argv[])
 {
 #if DEBUG == 1
-  test3Mapping();
-  test3();
-  return 0;
 	return testOnCam();
 #endif
   BaseSubtractor *subtractor = new SimpleSubtractor;
   std::vector<float> precision_array, recall_array;
-	int num_thresholds = 2;
+	int num_thresholds = 10;
 	std::vector<float> threshold_array(num_thresholds);
 	for (auto threshold_idx = 0; threshold_idx < num_thresholds; ++threshold_idx)
 	{
@@ -236,7 +134,7 @@ int testOnCam()
 #endif
     subtractor->Subtract(frame.data, frame.rows, frame.cols, frame.channels(),
       frame.step, mask.data, mask.step);
-//    computeSobel(frame.data, frame.rows, frame.cols, frame.step, mask.data, mask.step);
+    computeSobel(frame.data, frame.rows, frame.cols, frame.step, mask.data, mask.step);
     cv::imshow("Frame", frame);
     cv::imshow("Mask", mask);
     if (cv::waitKey(30) >= 0)

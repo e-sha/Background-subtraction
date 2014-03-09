@@ -2,6 +2,10 @@
 #include <stdlib.h>
 #include <math.h>
 #include "Configuration.h"
+#include "MySSEFunctions.h"
+
+using e_sha_SSELib::ConvertInt8ToFloat;
+using e_sha_SSELib::Shuffle16Elems;
 
 SimpleSubtractorImpl4::SimpleSubtractorImpl4(float in_threshold) :
 	ISimpleSubtractorImpl(in_threshold), m_BYTES_PER_BLOCK(16)
@@ -38,16 +42,13 @@ void SimpleSubtractorImpl4::InitializeModel(const unsigned char *in_img, size_t 
 		img_elem = in_img + row_idx * in_step;
 #if USE_SSE
 		__m128i img_block_32, img_block_16, img_block_8;
-		__m128 first_block, second_block, third_block, fourth_block;
+		__m128 block[4];
 		for (auto block_idx = 0U; block_idx < num_blocks; ++block_idx)
 		{
 			img_block_8 = _mm_loadu_si128((__m128i*)img_elem);
-      ConvertInt8ToFloat(img_block_8, first_block, second_block, third_block,
-        fourth_block);
-			_mm_store_ps(model_elem, first_block);
-			_mm_store_ps(model_elem + 4, second_block);
-			_mm_store_ps(model_elem + 8, third_block);
-			_mm_store_ps(model_elem + 12, fourth_block);
+      ConvertInt8ToFloat(img_block_8, block);
+			for (auto var_idx = 0U; var_idx < 4; ++var_idx)
+				_mm_store_ps(model_elem + 4 * var_idx, block[var_idx]);
 
 			model_elem += m_BYTES_PER_BLOCK;
 			img_elem += m_BYTES_PER_BLOCK;
@@ -127,10 +128,11 @@ void SimpleSubtractorImpl4::Subtract(const unsigned char *in_img,
       
       mask_elem[col_idx] = res > threshold ? 255 : 0;
       
-      model_elem[0] = alpha * img_elem[0] + inv_alpha * model_elem[0];
-      model_elem[1] = alpha * img_elem[1] + inv_alpha * model_elem[1];
-      model_elem[2] = alpha * img_elem[2] + inv_alpha * model_elem[2];
-      model_elem[3] = alpha * img_elem[3] + inv_alpha * model_elem[3];
+			for (auto var_idx = 0U; var_idx < 4; ++var_idx)
+			{
+        model_elem[var_idx] =
+				 	alpha * img_elem[var_idx] + inv_alpha * model_elem[var_idx];
+			}
 
       model_elem += 4;
       img_elem += 4;
@@ -147,10 +149,11 @@ void SimpleSubtractorImpl4::Subtract(const unsigned char *in_img,
       
       mask_elem[col_idx] = res > threshold ? 255 : 0;
       
-      model_elem[0] = alpha * img_elem[0] + inv_alpha * model_elem[0];
-      model_elem[1] = alpha * img_elem[1] + inv_alpha * model_elem[1];
-      model_elem[2] = alpha * img_elem[2] + inv_alpha * model_elem[2];
-      model_elem[3] = alpha * img_elem[3] + inv_alpha * model_elem[3];
+			for (auto var_idx = 0U; var_idx < 4; ++var_idx)
+			{
+        model_elem[var_idx] =
+				 	alpha * img_elem[var_idx] + inv_alpha * model_elem[var_idx];
+			}
 
       model_elem += 4;
       img_elem += 4;
@@ -160,112 +163,46 @@ void SimpleSubtractorImpl4::Subtract(const unsigned char *in_img,
   
 }
 
-void SimpleSubtractorImpl4::ConvertInt8ToFloat(__m128i in_value,
-  __m128 &out_first, __m128 &out_second, __m128 &out_third,
-  __m128 &out_fourth)
-{
-  __m128i input_16, input_32;
-	const __m128i ZERO = _mm_setzero_si128();
-
-  // convert first half to 16bit integer
-  input_16 = _mm_unpacklo_epi8(in_value, ZERO);
-  // convert first fourth to 32bit interger
-  input_32 = _mm_unpacklo_epi16(input_16, ZERO);
-  // convert first fourth to 32bit floating point value
-  out_first = _mm_cvtepi32_ps(input_32);
-
-  // convert second fourth to 32bit integer
-  input_32 = _mm_unpackhi_epi16(input_16, ZERO);
-  // convert second fourth to 32bit floating point value
-  out_second = _mm_cvtepi32_ps(input_32);
-
-  // convert second half to 16bit integer
-  input_16 = _mm_unpackhi_epi8(in_value, ZERO);
-  // convert third fourth to 32bit interger
-  input_32 = _mm_unpacklo_epi16(input_16, ZERO);
-  // convert third fourth to 32bit floating point value
-  out_third = _mm_cvtepi32_ps(input_32);
-
-  // convert fourth fourth to 32bit integer
-  input_32 = _mm_unpackhi_epi16(input_16, ZERO);
-  // convert fourth fourth to 32bit floating point value
-  out_fourth = _mm_cvtepi32_ps(input_32);
-}
-
-inline void SimpleSubtractorImpl4::ShufflePixels(__m128 &io_a,
-	__m128 &io_b, __m128 &io_c, __m128 &io_d)
-{
-	__m128 ccdd1 = _mm_unpackhi_ps(io_a, io_b);
-	__m128 ccdd2 = _mm_unpackhi_ps(io_c, io_d);
-	__m128 aabb1 = _mm_unpacklo_ps(io_a, io_b);
-	__m128 aabb2 = _mm_unpacklo_ps(io_c, io_d);
-
-	io_a = 
-		_mm_castpd_ps(_mm_unpacklo_pd(_mm_castps_pd(aabb1), _mm_castps_pd(aabb2)));
-	io_b =
-	 	_mm_castpd_ps(_mm_unpackhi_pd(_mm_castps_pd(aabb1), _mm_castps_pd(aabb2)));
-	io_c =
-		_mm_castpd_ps(_mm_unpacklo_pd(_mm_castps_pd(ccdd1), _mm_castps_pd(ccdd2)));
-	io_d = 
-		_mm_castpd_ps(_mm_unpackhi_pd(_mm_castps_pd(ccdd1), _mm_castps_pd(ccdd2)));
-}
-
 inline __m128i SimpleSubtractorImpl4::SubtractBlock(
   const unsigned char *in_img, float *io_model)
 {
-  __m128 first_model, second_model, third_model, fourth_model;
-  __m128 first_block, second_block, third_block, fourth_block;
-  __m128 first_res, second_res, third_res, fourth_res;
+  __m128 model[4];
+  __m128 block[4];
+  __m128 res[4];
 
   // load image
-  __m128i res = _mm_loadu_si128((__m128i*)in_img);
-  ConvertInt8ToFloat(res, first_block, second_block, third_block,
-    fourth_block);
+  __m128i mask = _mm_loadu_si128((__m128i*)in_img);
+  ConvertInt8ToFloat(mask, block);
 
-  // load_model
-  first_model = _mm_load_ps(io_model);
-  second_model = _mm_load_ps(io_model + 4);
-  third_model = _mm_load_ps(io_model + 8);
-  fourth_model = _mm_load_ps(io_model + 12);
+	for (auto var_idx = 0U; var_idx < 4; ++var_idx)
+	{
+    // load_model
+		model[var_idx] = _mm_load_ps(io_model + 4 * var_idx);
+    // subtract background
+		res[var_idx] = _mm_sub_ps(block[var_idx], model[var_idx]);
+	}
 
-  // subtract background
-	first_res = _mm_sub_ps(first_block, first_model);
-	second_res = _mm_sub_ps(second_block, second_model);
-	third_res = _mm_sub_ps(third_block, third_model);
-	fourth_res = _mm_sub_ps(fourth_block, fourth_model);
-
-	ShufflePixels(first_res, second_res, third_res, fourth_res);
-			
-	first_res = _mm_mul_ps(first_res, first_res);
-	second_res = _mm_mul_ps(second_res, second_res);
-	third_res = _mm_mul_ps(third_res, third_res);
-			
-	first_res = _mm_add_ps(first_res, second_res);
-	first_res = _mm_add_ps(first_res, third_res);
-
-	res = _mm_castps_si128(_mm_cmpgt_ps(first_res, m_threshold));
-
-	// update model
-	UpdateBlock(first_model, first_block);
-	UpdateBlock(second_model, second_block);
-	UpdateBlock(third_model, third_block);
-	UpdateBlock(fourth_model, fourth_block);
-
-  // store background model
-  _mm_store_ps(io_model, first_model);
-  _mm_store_ps(io_model + 4, second_model);
-  _mm_store_ps(io_model + 8, third_model);
-  _mm_store_ps(io_model + 12, fourth_model);
-
-  return res;
-}
-
-inline __m128 SimpleSubtractorImpl4::Abs_ps(__m128 in_value)
-{
-  static const __m128 sign_mask = _mm_set1_ps(1 << 31);
-  return _mm_andnot_ps(sign_mask, in_value);
-}
+	Shuffle16Elems(res);
 		
+	for (auto var_idx = 0U; var_idx < 3; ++var_idx)	
+		res[var_idx] = _mm_mul_ps(res[var_idx], res[var_idx]);
+			
+	for (auto var_idx = 1U; var_idx < 3; ++var_idx)
+		res[0] = _mm_add_ps(res[0], res[var_idx]);
+
+	mask = _mm_castps_si128(_mm_cmpgt_ps(res[0], m_threshold));
+
+	for (auto var_idx = 0U; var_idx < 4U; ++var_idx)
+	{
+    // update model
+	  UpdateBlock(model[var_idx], block[var_idx]);
+		// store background model
+		_mm_store_ps(io_model + 4 * var_idx, model[var_idx]);
+	}
+
+  return mask;
+}
+
 inline void SimpleSubtractorImpl4::UpdateBlock(__m128 &io_model,
   __m128 in_data)
 {

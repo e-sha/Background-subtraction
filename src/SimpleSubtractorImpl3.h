@@ -64,51 +64,6 @@ class SimpleSubtractorImpl3 : public ISimpleSubtractorImpl
 		/// mask of the results in the fourth array
 		static const __m128i m_result_mask_3;
 
-		/// Method to convert array of 16 8bit unsigned integer values to floating
-		/// point values
-		/// @param in_value is an input 16 8bit unsigned integer values
-		/// @param out_first is a first fourth of floating point values
-		/// @param out_second is a second fourth of floating point values
-		/// @param out_third is a third fourth of floating point values
-		/// @param out_fourth is a last fourth of floating point values
-		void ConvertInt8ToFloat(__m128i in_value, __m128 &out_first,
-		  __m128 &out_second, __m128 &out_third, __m128 &out_fourth);
-
-		/// Method to convert 16 pixels values from the [rgbr] [gbrg] [brgb] [rgbr]
-		/// [gbrg] [brgb] [rgbr] [gbrg] [brgb] [rgbr] [gbrg] [brgb] format to
-		/// [rrrr] [rrrr] [rrrr] [rrrr] [gggg] [gggg] [gggg] [gggg]
-		/// [bbbb] [bbbb] [bbbb] [bbbb] format. Pixels stored in the following order
-		/// [048C] [159D] [26AE] [37BF].
-		/// @param io_r1 is a first block of red pixels;
-		/// @param io_r2 is a second block of red pixels;
-		/// @param io_r3 is a third block of red pixels;
-		/// @param io_r4 is a fourth block of red pixels;
-		/// @param io_g1 is a first block of green pixels;
-		/// @param io_g2 is a second block of green pixels;
-		/// @param io_g3 is a third block of green pixels;
-		/// @param io_g4 is a fourth block of green pixels;
-		/// @param io_b1 is a first block of blue pixels;
-		/// @param io_b2 is a second block of blue pixels;
-		/// @param io_b3 is a third block of blue pixels;
-		/// @param io_b4 is a fourth block of blue pixels;
-		static
-#if DEBUG == 0
-	 inline
-#endif
-		void ShufflePixels(__m128 &io_r1, __m128 &io_r2, __m128 &io_r3,
-			__m128 &io_r4, __m128 &io_g1, __m128 &io_g2, __m128 &io_g3, __m128 &io_g4,
-			__m128 &io_b1, __m128 &io_b2, __m128 &io_b3, __m128 &io_b4);
-
-		/// Method to convert values from the [abcd] [abcd] [abcd] [abcd] format to
-		/// [aaaa] [bbbb] [cccc] [dddd] format. Pixels stored in the following order
-		/// [0123].
-		/// @param io_a is a first block of values;
-		/// @param io_b is a second block of values;
-		/// @param io_c is a third block of values;
-		/// @param io_d is a fourth block of values;
-		static inline void ShufflePixels(__m128 &io_a, __m128 &io_b, __m128 &io_c,
-			__m128 &io_d);
-
 		/// Method to subtract background and update model for 4 elements
 		/// @param @in_img is a pointer to the a of the image;
 		/// @param @io_model is a pointer to the a of the model;

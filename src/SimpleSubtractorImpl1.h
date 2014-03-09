@@ -50,25 +50,10 @@ class SimpleSubtractorImpl1 : public ISimpleSubtractorImpl
 		/// used background threshold
 		__m128 m_threshold;
 
-		/// Method to convert array of 16 8bit unsigned integer values to floating
-		/// point values
-		/// @param in_value is an input 16 8bit unsigned integer values
-		/// @param out_first is a first fourth of floating point values
-		/// @param out_second is a second fourth of floating point values
-		/// @param out_third is a third fourth of floating point values
-		/// @param out_fourth is a last fourth of floating point values
-		void ConvertInt8ToFloat(__m128i in_value, __m128 &out_first,
-		  __m128 &out_second, __m128 &out_third, __m128 &out_fourth);
-
 		/// Method to subtract background and update model for 4 elements
 		/// @param @in_img is intensity values for the image pixels;
 		/// @param @io_model is intensity values for the model pixel;
 		/// @return foreground mask. If pixels is related to foreground than its
 		/// value in the mask is 0xffffffff.
 		inline __m128i SubtractBlock(__m128 in_img, __m128 &io_model);
-
-		/// Method to compute absolute value of the 4 input floating point values
-		/// @param in_value is the 4 input floating point values;
-		/// @return absolute values of the 4 input floating point values.
-		static inline __m128 Abs_ps(__m128 in_value);
 };

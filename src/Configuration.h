@@ -1,4 +1,4 @@
 #pragma once
 
 #define USE_SSE 1
-#define DEBUG 0
+#define DEBUG 1
