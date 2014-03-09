@@ -2,10 +2,38 @@
 
 IGMMSubtractorImpl::IGMMSubtractorImpl()
 {
+	m_model_is_trained = true;
 }
 
 IGMMSubtractorImpl::~IGMMSubtractorImpl()
 {
+}
+
+void IGMMSubtractorImpl::Train(const unsigned char *in_img,
+	const unsigned int in_num_rows, const unsigned int in_num_cols,
+	const unsigned int in_img_step)
+{
+	ReleaseModel();
+	TrainUnsafe(in_img, in_num_rows, in_num_cols, in_img_step);
+	m_model_is_trained = true;
+}
+
+void IGMMSubtractorImpl::Subtract(const unsigned char *in_img,
+	const unsigned int in_num_rows, const unsigned int in_num_cols,
+	const unsigned int in_img_step, unsigned char *out_mask,
+	const unsigned int in_mask_step)
+{
+	if (m_model_is_trained)
+	{
+		SubtractUnsafe(in_img, in_num_rows, in_num_cols, in_img_step, out_mask,
+			in_mask_step);
+	}
+	else
+	{
+		std::cerr << "Cannot subtract background. Model was not trained!" 
+			<< std::endl;
+		exit(-1);
+	}
 }
 
 void IGMMSubtractorImpl::SetLearningRate(const float in_learning_rate)
