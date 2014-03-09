@@ -1,5 +1,6 @@
 #pragma once
 #include "BaseSubtractor.h"
+#include "IGMMSubtractorImpl.h"
 
 class GMMSubtractor : public BaseSubtractor
 {
@@ -36,27 +37,13 @@ class GMMSubtractor : public BaseSubtractor
 
 		/// Method to set learning rate of the algorithm
 		/// @param in_learning_rate is a new learning rate
-		void SetLerningRate(const float in_learning_rate);
+		void SetLearningRate(const float in_learning_rate);
 
 		/// Method to set background threshold of the algorithm
 		/// @param in_threshold is a new background threshold
 		void SetBackgroundThreshold(const float in_threshold);
 
 	private:
-		/// Mean values of gaussians stored in matrix format. Each row of the matrix
-		/// is a mean value of the gaussian. Number of columns corresponds to number
-		/// of color channels in the image (1 or 3)
-		float *m_mean_array;
-
-		/// Covariantion matrices of the gaussians stored in the matrix format. Each
-		/// row of the matrix is a covariation matrix of the gaussian expanded to a
-		/// row. At this moment all covariation matrices are diagonal. That's why
-		/// we store only diagonal elements of the matrices
-		float *m_covariaton_array;
-
-		/// Learning rate of the algorithm
-		float m_learning_rate;
-
-		/// Background threshold
-		float m_threshold;
+		/// Implementation of the background subtractor
+		IGMMSubtractorImpl *m_impl;
 };
