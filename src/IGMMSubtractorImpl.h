@@ -56,11 +56,17 @@ class IGMMSubtractorImpl
 		/// of color channels in the image (1 or 3)
 		float *m_mean_array;
 
+		/// Difference in bytes between two consecutive rows of the mean values
+		size_t m_mean_step;
+
 		/// Covariantion matrices of the gaussians stored in the matrix format. Each
 		/// row of the matrix is a covariation matrix of the gaussian expanded to a
 		/// row. At this moment all covariation matrices are diagonal. That's why
 		/// we store only diagonal elements of the matrices
 		float *m_covariation_array;
+
+		/// Difference in bytes between two consecutive rows of the covariance values
+		size_t m_covariance_step;
 
 		/// Learning rate of the algorithm
 		float m_learning_rate;
